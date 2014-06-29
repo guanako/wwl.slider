@@ -1,0 +1,24 @@
+@charset "utf-8";
+
+@import url("config.less");
+@import url("keyframes.less");
+
+.wwl-slider {
+	display: block;
+	position: relative;
+	width: 100%;
+	height: 100%;
+	overflow: hidden;
+
+	.wwl-slider-slide {
+		position: absolute;
+		left: 0;
+		top: 0;
+		width: 100%;
+		height: 100%;
+
+		.wwl-slider-layer {
+			position: absolute;
+		}
+	}
+}

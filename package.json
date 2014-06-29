@@ -1,0 +1,8 @@
+{
+	"name": "wwl.slider",
+	"description": "Simple and flexible CSS3 slider widget",
+	"author": "Max Ruman <max.ruman@guanako.be>",
+	"license": "LGPLv3",
+	"dependencies": {},
+	"version": "0.1.0-dev"
+}

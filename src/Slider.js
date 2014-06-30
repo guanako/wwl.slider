@@ -34,11 +34,6 @@ var wwl        = wwl        || {};
  *
  *   - SlideTransitionStart (cancellable) { currentSlideId, nextSlideId, direction     }
  *   - SlideTransitionEnd:                { currentSlideId, previousSlideId, direction }
- *
- * There are 2 main custom events used to trigger the slider:
- *
- *   - NextSlideRequest
- *   - PreviousSlideRequest
  */
 wwl.slider.Slider = (
 	function(Slide, Animation, undefined) {
@@ -147,10 +142,6 @@ wwl.slider.Slider = (
 				currentSlide.moveZ(1);
 				currentSlide.show();
 			}
-
-			/* Register event listeners */
-			this.dom.addEventListener("NextSlideRequest", this.next.bind(this, 1), false);
-			this.dom.addEventListener("PreviousSlideRequest", this.previous.bind(this, 1), false);
 		};
 
 		/*

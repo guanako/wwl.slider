@@ -61,7 +61,7 @@ wwl.slider.Animation = (
 		 * Create a Slide
 		 */
 		o.init = function(effect, direction, which, duration, easing) {
-			if (typeof effect !== "string" && effect !== "slide")
+			if (typeof effect !== "string" && effect !== "slide" && effect !== "fade")
 				throw new Error("Parameter 'effect' must be a valid animation effect");
 
 			if (direction !== "left" && direction !== "right")

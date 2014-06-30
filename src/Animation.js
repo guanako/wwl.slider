@@ -127,6 +127,9 @@ wwl.slider.Animation = (
 					this.easing;
 
 				dom.addEventListener("animationend", listener, false);
+				dom.addEventListener("oanimationend", listener, false);
+				dom.addEventListener("MSAnimationEnd", listener, false);
+				dom.addEventListener("webkitAnimationEnd", listener, false);
 				dom.style.webkitAnimation = animation;
 				dom.style.khtmlAnimation  = animation;
 				dom.style.mozAnimation    = animation;

@@ -374,3 +374,15 @@ wwl.slider.Slider = (
 	wwl.slider.Slide,
 	wwl.slider.Animation
 );
+
+
+/*
+ * Create one or more Slider(s) (shorthand for wwl.slider.Slider.create())
+ *
+ * @param  HTMLElement|NodeList dom     The DOM HTMLElement, or a NodeList containing HTMLElements
+ * @param  hash                 options Options to give to the slider
+ * @return Slider|Array<Slider>         Depends on if it was an HTMLElement or a NodeList
+ */
+wwl.slider.create = function(domElement, options) {
+	return wwl.slider.Slider.create(domElement, options);
+};

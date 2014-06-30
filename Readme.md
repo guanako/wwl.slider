@@ -58,20 +58,13 @@ Une fois installé, l'utilisation est très facile :
 var slider = new wwl.slider.Slider(document.getElementById("slider"));
 
 /* The procedural way */
-var slider = wwl.slide.create(document.getElementById("slider"));
-
-/* The jQuery way */
-var slider = $("#slider").wwlSlider();
+var slider = wwl.slider.create(document.getElementById("slider"));
 
 /* You can then, if you want... */
+slider.go(-2);  /* Nice for manual navitation   */
 slider.next();  /* Nice for an arrow navigation */
 slider.show(4); /* Nice for a bullet navigation */
-slider.pause();
 slider.play();
-
-$("#slider").trigger("next");
-$("#slider").trigger("pause");
-$("#slider").trigger("play");
 ```
 
 Documentation

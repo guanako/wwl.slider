@@ -195,3 +195,124 @@ début de la transition de la slide :
 
 À vous de jouer ensuite avec les animations CSS3, les delays et les
 quatre états des Slides afin de créer vos propres animations.
+
+### Commandes du slider
+
+#### Fonctions de déplacement
+
+Avancer/reculer à la slide suivante/précédente (si le nombre en argument
+est trop grand ou trop petit, le comptage continue de l'autre côté) :
+
+```javascript
+/* Passer à la slide suivante */
+slider.next();
+
+/* Avancer de deux slides */
+slider.next(3);
+
+/* Passer à la slide précédente */
+slider.previous();
+
+/* Reculer de trois slides */
+slider.previous(3);
+
+/* Avancer de deux slides */
+slide.go(+2);
+
+/* Reculer de trois slides */
+slide.go(-3);
+```
+
+Afficher une slide spécifique (si l'ID fourni en argument n'existe pas,
+une exception sera levée) :
+
+```javascript
+/* Retourne le nombre de slides */
+var n = slider.countSlides();
+
+/* Retourne la liste ordonnées des ID des slides */
+var ids = slider.getSlideIds();
+
+/* Va à la troisième slide (ID = 2) */
+slider.show(2);
+```
+
+Toutes les fonctions de déplacement sont inactives lors d'une transition
+(afin de simplifier la gestion de l'affichage). Si vous désirez
+néanmoins mettre un ordre de transition dans une file afin d'être
+éxecuté à la fin de la transition en cours, vous devez utiliser les
+évènements (ci-dessous). Une queue d'actions pourra être implémentée
+dans une version ultérieure du Slider.
+
+Les fonctions de déplacement retournent une Promise native
+(ECMAScript 6), qui est résolue à la fin de la transition (ou dès le
+début si la transition est nulle), et rejetée si une transition est déjà
+en cours.
+
+#### Gestion de l'avancement automatique (autoplay)
+
+Démarrer et arrêter l'avancement automatique du slider :
+
+```javascript
+/* Démarrer l'avancement automatique. Si l'avancement automatique est
+ * déjà demarré, cette fonction remet le compte à rebourd à zéro. */
+slider.play();
+
+/* Arrête l'avancement automatique */
+slider.stop();
+```
+
+#### Évènements
+
+Des évènements (CustomEvent) sont émis sur l'élement DOM du slider au
+début et à la fin de chaque transition :
+
+- SlideTransitionStart (annulable)
+- SlideTransitionEnd
+
+Vous pouvez récupérer des informations sur la transition effectuée dans
+le détail des évènements (note : l'élément DOM du Slider est accessible via la propriété « dom ») :
+
+```javascript
+/* SlideTransitionStart */
+slider.dom.addEventListener("SlideTransitionStart", function(event) {
+	var currentSlideId = event.detail.currentSlideId;
+	var nextSlideId    = event.detail.nextSlideId;
+	var direction      = event.detail.direction;
+
+	console.log(currentSlideId, nextSlideId, direction);
+}, false);
+
+/* SlideTransitionEnd */
+slider.dom.addEventListener("SlideTransitionEnd", function(event) {
+	var currentSlideId  = event.detail.currentSlideId;
+	var previousSlideId = event.detail.previousSlideId;
+	var direction       = event.detail.direction;
+
+	console.log(currentSlideId, previousSlideId, direction);
+}, false);
+```
+
+Et vous pouvez annuler une transition :
+
+```javascript
+slider.dom.addEventListener("SlideTransitionStart", function(event) {
+	/* Cancels the transition */
+	event.preventDefault();
+}, false);
+```
+
+À faire
+-------
+
+- Traduire de la documentation en anglais
+
+- Vérifier les fonctionnalités ECMAScript et CSS3 nécessaires au
+  fonctionnement du slider dès la construction, et lancer une exception
+  si ces fonctionnalités ne sont pas disponibles.
+
+- Utiliser les MutationObservers pour gérer l'ajout à chaud de nouvelles
+  slides
+
+- Ajout d'une fonction delayUntil() permettant de bloquer l'état en
+  cours tant qu'une action n'est pas terminées (utilisant une Promise)

@@ -116,6 +116,11 @@ wwl.slider.Slider = (
 		o.attributes = null;
 
 		/*
+		 * @var bool Enable autoplay
+		 */
+		o.autoplay = null;
+
+		/*
 		 * @var float
 		 */
 		o.defaultDelay = null;
@@ -152,6 +157,7 @@ wwl.slider.Slider = (
 			this.slides = [];
 			this.playing = false;
 			this.inTransition = false;
+			this.playTimeout = null;
 			this.slideSelector = options.slideSelector || ".wwl-slider-slide";
 			this.layerSelector = options.layerSelector || ".wwl-slider-layer";
 
@@ -163,7 +169,13 @@ wwl.slider.Slider = (
 			this.attributes.animationEasing   = options.attributes.animationEasing   || "data-animation-easing";
 			this.attributes.animationDuration = options.attributes.animationDuration || "data-animation-duration";
 
-			this.autoplay                 = this.dom.getAttribute(this.attributes.autoplay)          || options.defaultAutoplay          || false;
+			if (typeof options.autoplay !== "undefined")
+				this.autoplay = options.autoplay;
+			else if (this.dom.getAttribute(this.attributes.autoplay) !== null)
+				this.autoplay = this.dom.getAttribute(this.attributes.autoplay) !== null;
+			else
+				this.autoplay = false;
+
 			this.defaultDelay             = this.dom.getAttribute(this.attributes.delay)             || options.defaultDelay             || 2.0;
 			this.defaultAnimationEffect   = this.dom.getAttribute(this.attributes.animationEffect)   || options.defaultAnimationEffect   || "slide";
 			this.defaultAnimationEasing   = this.dom.getAttribute(this.attributes.animationEasing)   || options.defaultAnimationEasing   || "ease";
@@ -183,6 +195,9 @@ wwl.slider.Slider = (
 				var currentSlide = this.getCurrentSlide();
 				currentSlide.moveZ(1);
 				currentSlide.show();
+
+				if (this.autoplay)
+					this.play();
 			}
 		};
 
@@ -290,6 +305,35 @@ wwl.slider.Slider = (
 				n = 1;
 
 			return this.go(-n);
+		};
+
+		/*
+		 * Play the slides
+		 */
+		o.play = function() {
+			this.playing = true;
+
+			this.playTimeout = setTimeout(function(that) {
+
+				var replay = that.play.bind(that);
+				that.next().then(replay, replay);
+
+			}, this.getCurrentSlide().getDelay() * 1000, this);
+		};
+
+		/*
+		 * Stop playing slides
+		 */
+		o.stop = function() {
+			if (this.playing) {
+
+				if (this.playTimeout) {
+					clearTimeout(this.playTimeout);
+					this.playTimeout = null;
+				}
+
+				this.playing = false;
+			}
 		};
 
 		/*

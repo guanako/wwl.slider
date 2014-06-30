@@ -36,7 +36,7 @@ var wwl        = wwl        || {};
  *   - SlideTransitionEnd:                { currentSlideId, previousSlideId, direction }
  */
 wwl.slider.Slider = (
-	function(Slide, Layer, Animation, undefined) {
+	function(Slide, Animation, undefined) {
 		"use strict";
 
 		if (typeof Promise !== "function")
@@ -44,9 +44,6 @@ wwl.slider.Slider = (
 
 		if (typeof Slide === "undefined")
 			throw new Error("Unmet dependency: Slide");
-
-		if (typeof Layer === "undefined")
-			throw new Error("Unmet dependency: Layer");
 
 		if (typeof Animation === "undefined")
 			throw new Error("Unmet dependency: Animation");
@@ -97,11 +94,6 @@ wwl.slider.Slider = (
 		o.slideSelector = null;
 
 		/*
-		 * @var string Selector that will be passed to the HTMLElement.prototype.querySelectorAll()
-		 */
-		o.layerSelector = null;
-
-		/*
 		 * @var bool Is the actual play state of the Slider "playing" or "not playing"
 		 */
 		o.playing = null;
@@ -149,7 +141,7 @@ wwl.slider.Slider = (
 		/*
 		 * @var hash<string>
 		 */
-		o.layerStateClasses = null;
+		o.slideStateClasses = null;
 
 		/*
 		 * Create a Slider
@@ -170,9 +162,8 @@ wwl.slider.Slider = (
 			this.playing = false;
 			this.inTransition = false;
 			this.playTimeout = null;
-			this.slideSelector = options.slideSelector || ".wwl-slider-slide";
-			this.layerSelector = options.layerSelector || ".wwl-slider-layer";
-			this.layerStateClasses = options.layerStateClasses || {};
+			this.slideSelector = options.slideSelector || ".slide";
+			this.slideStateClasses = options.slideStateClasses || {};
 
 			this.attributes = {};
 			this.attributes.autoplay          = options.attributes.autoplay          || "data-autoplay";
@@ -208,7 +199,7 @@ wwl.slider.Slider = (
 				var currentSlide = this.getCurrentSlide();
 				currentSlide.moveZ(1);
 				currentSlide.show();
-				currentSlide.setLayerState(Layer.STATES.PRESENT);
+				currentSlide.setState(Slide.STATES.PRESENT);
 
 				if (this.autoplay)
 					this.play();
@@ -494,8 +485,7 @@ wwl.slider.Slider = (
 					defaultAnimationEffect:   this.defaultAnimationEffect,
 					defaultAnimationEasing:   this.defaultAnimationEasing,
 					defaultAnimationDuration: this.defaultAnimationDuration,
-					layerSelector:            this.layerSelector,
-					layerStateClasses:        this.layerStateClasses,
+					stateClasses:             this.slideStateClasses,
 					attributes: {
 						delay:             this.attributes.delay,
 						animationEffect:   this.attributes.animationEffect,
@@ -505,6 +495,7 @@ wwl.slider.Slider = (
 				});
 
 				this.slides.push(slide);
+				slide.setState(Slide.STATES.BEHIND);
 				slide.hide();
 			}
 		};
@@ -531,7 +522,6 @@ wwl.slider.Slider = (
 	}
 )(
 	wwl.slider.Slide,
-	wwl.slider.Layer,
 	wwl.slider.Animation
 );
 

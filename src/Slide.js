@@ -18,18 +18,14 @@
  * License along with WWL. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "Layer.js"
 #include "Animation.js"
 
 var wwl        = wwl        || {};
     wwl.slider = wwl.slider || {};
 
 wwl.slider.Slide = (
-	function(Layer, Animation, undefined) {
+	function(Animation, undefined) {
 		"use strict";
-
-		if (typeof Layer === "undefined")
-			throw new Error("Unmet dependency: Layer");
 
 		if (typeof Animation === "undefined")
 			throw new Error("Unmet dependency: Animation");
@@ -42,24 +38,29 @@ wwl.slider.Slide = (
 		}, o = Class.prototype;
 
 		/*
+		 * Hold the value for a state
+		 */
+		Class.STATES = {
+			INCOMING: "incoming",
+			OUTGOING: "outgoing",
+			PRESENT:  "present",
+			BEHIND:   "behind"
+		};
+
+		/*
 		 * @var HTMLElement
 		 */
 		o.dom = null;
 
 		/*
-		 * @var array<Layer>
+		 * @var string
 		 */
-		o.layers = null;
+		o.state = null;
 
 		/*
 		 * @var string
 		 */
 		o.cssDisplay = null;
-
-		/*
-		 * @var string
-		 */
-		o.layerSelector = null;
 
 		/*
 		 * @var hash<string property, string attribute>
@@ -89,7 +90,7 @@ wwl.slider.Slide = (
 		/*
 		 * @var hash<string>
 		 */
-		o.layerStateClasses = null;
+		o.stateClasses = null;
 
 		/*
 		 * Create a Slide
@@ -102,10 +103,14 @@ wwl.slider.Slide = (
 			options.attributes = options.attributes || {};
 
 			this.dom = dom;
-			this.layers = [];
-			this.cssDisplay = dom.style.display !== "none" ? dom.style.display : "block";
-			this.layerSelector = options.layerSelector || ".layer";
-			this.layerStateClasses = options.layerStateClasses || {};
+			this.cssDisplay = dom.style.display !== "none"
+				? dom.style.display : "block";
+
+			this.stateClasses = {};
+			this.stateClasses[Class.STATES.INCOMING] = options.stateClasses[Class.STATES.INCOMING] || "is-incoming";
+			this.stateClasses[Class.STATES.OUTGOING] = options.stateClasses[Class.STATES.OUTGOING] || "is-outgoing";
+			this.stateClasses[Class.STATES.PRESENT]  = options.stateClasses[Class.STATES.PRESENT]  || "is-present";
+			this.stateClasses[Class.STATES.BEHIND]   = options.stateClasses[Class.STATES.BEHIND]   || "is-behind";
 
 			this.attributes = {};
 			this.attributes.delay             = options.attributes.delay             || "data-delay";
@@ -120,8 +125,6 @@ wwl.slider.Slide = (
 
 			this.delay    = parseFloat(this.delay);
 			this.duration = parseFloat(this.duration);
-
-			this.importLayers();
 		};
 
 		/*
@@ -136,10 +139,10 @@ wwl.slider.Slide = (
 			var isIncoming = animation.getType() === Animation.TYPES.INCOMING;
 			var animationEndPromise = animation.animate(this.dom);
 
-			this.setLayerState(isIncoming ? Layer.STATES.INCOMING : Layer.STATES.OUTGOING);
+			this.setState(isIncoming ? Class.STATES.INCOMING : Class.STATES.OUTGOING);
 
 			return animationEndPromise.then(function() {
-				this.setLayerState(isIncoming ? Layer.STATES.PRESENT : Layer.STATES.BEHIND);
+				this.setState(isIncoming ? Class.STATES.PRESENT : Class.STATES.BEHIND);
 			}.bind(this));
 		};
 
@@ -203,54 +206,19 @@ wwl.slider.Slide = (
 		};
 
 		/*
-		 * Set layer state
+		 * Set the current state
 		 */
-		o.setLayerState = function(state) {
-			if (! state in Layer.STATES)
-				throw new TypeError("Parameter 'state' must be a valid state (see Layer.STATES)");
+		o.setState = function(state) {
+			if (! state in Class.STATES)
+				throw new TypeError("Parameter 'state' must be a valid state (see Slide.STATES)");
 
-			this.layers.forEach(function(layer) {
-				layer.setState(state);
-			});
-		};
+			if (state === this.state)
+				return false;
 
-		/*
-		 * Import existing layers
-		 */
-		o.importLayers = function() {
-			var layers = this.dom.querySelectorAll(this.layerSelector);
-			Array.prototype.slice.call(layers).forEach(this.addLayer, this);
-		};
-
-		/*
-		 * Add a layer
-		 *
-		 * @param HTMLElement dom
-		 */
-		o.addLayer = function(dom) {
-			if (! this.hasLayerByElement(dom)) {
-				var layer = new Layer(dom, {
-					stateClasses: this.layerStateClasses
-				});
-
-				this.layers.push(layer);
-				layer.setState(Layer.STATES.BEHIND);
-			}
-		};
-
-		/*
-		 * Tell if the given element is registered as a slide
-		 *
-		 * @param HTMLElement dom
-		 */
-		o.hasLayerByElement = function(dom) {
-			for (/*let*/ var i = 0; i < this.layers.length; i++) {
-				if (this.layers[i].dom === dom) {
-					return true;
-				}
-			}
-
-			return false;
+			this.dom.classList.remove(this.stateClasses[this.state]);
+			this.dom.classList.add(this.stateClasses[state]);
+			this.state = state;
+			return true;
 		};
 
 		/*
@@ -258,7 +226,4 @@ wwl.slider.Slide = (
 		 */
 		return Class;
 	}
-)(
-	wwl.slider.Layer,
-	wwl.slider.Animation
-);
+)(wwl.slider.Animation);

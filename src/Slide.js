@@ -29,7 +29,7 @@ wwl.slider.Slide = (
 		"use strict";
 
 		if (typeof Layer === "undefined")
-			throw {"name": "DependencyError", "message": "Unmet dependency: Layer"};
+			throw new Error("Unmet dependency: Layer");
 
 		/*
 		 * Alias to the class itself and its prototype
@@ -41,21 +41,25 @@ wwl.slider.Slide = (
 		/*
 		 * @var HTMLElement
 		 */
-		o.dom;
+		o.dom = null;
 
 		/*
 		 * @var string
 		 */
-		o.cssDisplay;
+		o.cssDisplay = null;
 
 		/*
 		 * Create a Slide
 		 */
-		o.init = function(dom) {
+		o.init = function(dom, options) {
+			options = options || {};
+
+			if (! dom instanceof HTMLElement)
+				throw new TypeError("Invalid DOM Node (must be an HTMLElement)");
+
 			this.dom = dom;
 			this.cssDisplay = dom.style.display !== "none"
-				? dom.style.display
-				: "block";
+				? dom.style.display : "block";
 		};
 
 		/*
@@ -97,6 +101,5 @@ wwl.slider.Slide = (
 	}
 )(
 	wwl.slider.Layer,
-	wwl.slider.Stylist,
 	wwl.slider.Animation
 );

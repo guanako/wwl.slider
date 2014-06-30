@@ -33,9 +33,20 @@ wwl.slider.Layer = (
 		}, o = Class.prototype;
 
 		/*
+		 * @var HTMLElement
+		 */
+		o.dom = null;
+
+		/*
 		 * Create a Slide
 		 */
-		o.init = function() {
+		o.init = function(dom, options) {
+			options = options || {};
+
+			if (! dom instanceof HTMLElement)
+				throw new TypeError("Invalid DOM Node (must be an HTMLElement)");
+
+			this.dom = dom;
 		};
 
 		/*

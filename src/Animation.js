@@ -33,9 +33,19 @@ wwl.slider.Animation = (
 		}, o = Class.prototype;
 
 		/*
-		 * @var string
+		 * @var string The desired effect: slide
 		 */
-		o.name = null;
+		o.effect = null;
+
+		/*
+		 * @var string The direction of the change: left or right
+		 */
+		o.direction = null;
+
+		/*
+		 * @var string Wich slide is it, the entering one (in) or the exiting one (out)
+		 */
+		o.which = null;
 
 		/*
 		 * @var float (seconds)
@@ -50,16 +60,24 @@ wwl.slider.Animation = (
 		/*
 		 * Create a Slide
 		 */
-		o.init = function(name, duration, easing) {
-			if (typeof name === "undefined")
-				throw new Error("Parameter 'name' must be a valid animation name");
+		o.init = function(effect, direction, which, duration, easing) {
+			if (typeof effect !== "string" && effect !== "slide")
+				throw new Error("Parameter 'effect' must be a valid animation effect");
+
+			if (direction !== "left" && direction !== "right")
+				throw new Error("Parameter 'direction' must be a valid transition direction");
+
+			if (which !== "in" && which !== "out")
+				throw new Error("Parameter 'which' must be a valid valid transitive slide type");
 
 			if (typeof duration === "undefined")
 				throw new Error("Parameter 'duration' must be a valid number of seconds (float)");
 
-			this.name = name;
+			this.effect = effect;
+			this.direction = direction;
+			this.which = which;
 			this.duration = duration;
-			this.easing = easing;
+			this.easing = easing || "ease";
 		};
 
 		/*
@@ -76,14 +94,21 @@ wwl.slider.Animation = (
 					resolve();
 				};
 
-				dom.addEventListener("animationend", listener, false);
+				var animation =
+					"wwl-slider-fx-" +
+					this.effect + "-" +
+					this.direction + "-" +
+					this.which + " " +
+					this.duration + "s " +
+					this.easing;
 
-				dom.style.webkitAnimation = "wwl-slider-fx-" + this.name + " " + this.duration + "s";
-				dom.style.khtmlAnimation  = "wwl-slider-fx-" + this.name + " " + this.duration + "s";
-				dom.style.mozAnimation    = "wwl-slider-fx-" + this.name + " " + this.duration + "s";
-				dom.style.msAnimation     = "wwl-slider-fx-" + this.name + " " + this.duration + "s";
-				dom.style.oAnimation      = "wwl-slider-fx-" + this.name + " " + this.duration + "s";
-				dom.style.animation       = "wwl-slider-fx-" + this.name + " " + this.duration + "s";
+				dom.addEventListener("animationend", listener, false);
+				dom.style.webkitAnimation = animation;
+				dom.style.khtmlAnimation  = animation;
+				dom.style.mozAnimation    = animation;
+				dom.style.msAnimation     = animation;
+				dom.style.oAnimation      = animation;
+				dom.style.animation       = animation;
 			}.bind(this));
 		};
 

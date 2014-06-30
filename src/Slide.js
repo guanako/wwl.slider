@@ -49,6 +49,31 @@ wwl.slider.Slide = (
 		o.cssDisplay = null;
 
 		/*
+		 * @var hash<string property, string attribute>
+		 */
+		o.attributes = null;
+
+		/*
+		 * @var float
+		 */
+		o.delay = null;
+
+		/*
+		 * @var string
+		 */
+		o.animationEffect = null;
+
+		/*
+		 * @var string
+		 */
+		o.animationEasing = null;
+
+		/*
+		 * @var float
+		 */
+		o.animationDuration = null;
+
+		/*
 		 * Create a Slide
 		 */
 		o.init = function(dom, options) {
@@ -60,6 +85,21 @@ wwl.slider.Slide = (
 			this.dom = dom;
 			this.cssDisplay = dom.style.display !== "none"
 				? dom.style.display : "block";
+
+			options.attributes = options.attributes || {};
+			this.attributes = {};
+			this.attributes.delay             = options.attributes.delay             || "data-delay";
+			this.attributes.animationEffect   = options.attributes.animationEffect   || "data-animation";
+			this.attributes.animationEasing   = options.attributes.animationEasing   || "data-animation-easing";
+			this.attributes.animationDuration = options.attributes.animationDuration || "data-animation-duration";
+
+			this.delay             = this.dom.getAttribute(this.attributes.delay)             || options.defaultDelay             || 2.0;
+			this.animationEffect   = this.dom.getAttribute(this.attributes.animationEffect)   || options.defaultAnimationEffect   || "slide";
+			this.animationEasing   = this.dom.getAttribute(this.attributes.animationEasing)   || options.defaultAnimationEasing   || "ease";
+			this.animationDuration = this.dom.getAttribute(this.attributes.animationDuration) || options.defaultAnimationDuration || 0.5;
+
+			this.delay    = parseFloat(this.delay);
+			this.duration = parseFloat(this.duration);
 		};
 
 		/*
@@ -92,6 +132,42 @@ wwl.slider.Slide = (
 		 */
 		o.moveZ = function(index) {
 			this.dom.style.zIndex = index;
+		};
+
+		/*
+		 * Get the delay this slide must be displayed
+		 *
+		 * @return float
+		 */
+		o.getDelay = function() {
+			return this.delay;
+		};
+
+		/*
+		 * Get the animation effect
+		 *
+		 * @return string
+		 */
+		o.getAnimationEffect = function() {
+			return this.animationEffect;
+		};
+
+		/*
+		 * Get the animation timing function
+		 *
+		 * @return string
+		 */
+		o.getAnimationEasing = function() {
+			return this.animationEasing;
+		};
+
+		/*
+		 * Get the animation duration
+		 *
+		 * @return float
+		 */
+		o.getAnimationDuration = function() {
+			return this.animationDuration;
 		};
 
 		/*

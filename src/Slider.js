@@ -111,6 +111,31 @@ wwl.slider.Slider = (
 		o.inTransition = null;
 
 		/*
+		 * @var hash<string property, string attribute>
+		 */
+		o.attributes = null;
+
+		/*
+		 * @var float
+		 */
+		o.defaultDelay = null;
+
+		/*
+		 * @var string
+		 */
+		o.defaultAnimationEffect = null;
+
+		/*
+		 * @var string
+		 */
+		o.defaultAnimationEasing = null;
+
+		/*
+		 * @var float
+		 */
+		o.defaultAnimationDuration = null;
+
+		/*
 		 * Create a Slider
 		 *
 		 * @param HTMLElement dom     The Slider root DOM Element
@@ -129,6 +154,23 @@ wwl.slider.Slider = (
 			this.inTransition = false;
 			this.slideSelector = options.slideSelector || ".wwl-slider-slide";
 			this.layerSelector = options.layerSelector || ".wwl-slider-layer";
+
+			options.attributes = options.attributes || {};
+			this.attributes = {};
+			this.attributes.autoplay          = options.attributes.autoplay          || "data-autoplay";
+			this.attributes.delay             = options.attributes.delay             || "data-delay";
+			this.attributes.animationEffect   = options.attributes.animationEffect   || "data-animation";
+			this.attributes.animationEasing   = options.attributes.animationEasing   || "data-animation-easing";
+			this.attributes.animationDuration = options.attributes.animationDuration || "data-animation-duration";
+
+			this.autoplay                 = this.dom.getAttribute(this.attributes.autoplay)          || options.defaultAutoplay          || false;
+			this.defaultDelay             = this.dom.getAttribute(this.attributes.delay)             || options.defaultDelay             || 2.0;
+			this.defaultAnimationEffect   = this.dom.getAttribute(this.attributes.animationEffect)   || options.defaultAnimationEffect   || "slide";
+			this.defaultAnimationEasing   = this.dom.getAttribute(this.attributes.animationEasing)   || options.defaultAnimationEasing   || "ease";
+			this.defaultAnimationDuration = this.dom.getAttribute(this.attributes.animationDuration) || options.defaultAnimationDuration || 0.5;
+
+			this.delay    = parseFloat(this.delay);
+			this.duration = parseFloat(this.duration);
 
 			this.importSlides();
 			/* TODO: note that when new slides are added, we must watch their
@@ -179,14 +221,18 @@ wwl.slider.Slider = (
 			var currentSlide = this.getCurrentSlide();
 			var nextSlide = this.getSlide(id);
 
+			var animEffect   = nextSlide.getAnimationEffect();
+			var animEasing   = nextSlide.getAnimationEasing();
+			var animDuration = nextSlide.getAnimationDuration();
+
 			this.currentSlideId = id;
 
 			nextSlide.moveZ(2);
 			nextSlide.show();
-			nextSlide.animate(new Animation("slide-" + direction + "-in", 0.6));
+			nextSlide.animate(new Animation(animEffect, direction, "in", animDuration, animEasing));
 
 			return currentSlide
-				.animate(new Animation("slide-" + direction + "-out", 0.6))
+				.animate(new Animation(animEffect, direction, "out", animDuration, animEasing))
 				.then(function() {
 
 					currentSlide.hide();
@@ -336,7 +382,19 @@ wwl.slider.Slider = (
 		 */
 		o.addSlide = function(dom) {
 			if (! this.hasSlideElement(dom)) {
-				var slide = new Slide(dom);
+				var slide = new Slide(dom, {
+					defaultDelay:             this.defaultDelay,
+					defaultAnimationEffect:   this.defaultAnimationEffect,
+					defaultAnimationEasing:   this.defaultAnimationEasing,
+					defaultAnimationDuration: this.defaultAnimationDuration,
+					attributes: {
+						delay:             this.attributes.delay,
+						animationEffect:   this.attributes.animationEffect,
+						animationEasing:   this.attributes.animationEasing,
+						animationDuration: this.attributes.animationDuration,
+					}
+				});
+
 				this.slides.push(slide);
 				slide.hide();
 			}

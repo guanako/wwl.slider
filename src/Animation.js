@@ -33,6 +33,30 @@ wwl.slider.Animation = (
 		}, o = Class.prototype;
 
 		/*
+		 * Animation effects
+		 */
+		Class.EFFECTS = {
+			SLIDE: "slide",
+			FADE:  "fade"
+		};
+
+		/*
+		 * Animation directions
+		 */
+		Class.DIRECTIONS = {
+			LEFT:  "left",
+			RIGHT: "right"
+		};
+
+		/*
+		 * Animation types
+		 */
+		Class.TYPES = {
+			INCOMING: "in",
+			OUTGOING: "out"
+		};
+
+		/*
 		 * @var string The desired effect: slide
 		 */
 		o.effect = null;
@@ -43,9 +67,9 @@ wwl.slider.Animation = (
 		o.direction = null;
 
 		/*
-		 * @var string Wich slide is it, the entering one (in) or the exiting one (out)
+		 * @var string Animation type
 		 */
-		o.which = null;
+		o.type = null;
 
 		/*
 		 * @var float (seconds)
@@ -60,22 +84,22 @@ wwl.slider.Animation = (
 		/*
 		 * Create a Slide
 		 */
-		o.init = function(effect, direction, which, duration, easing) {
-			if (typeof effect !== "string" && effect !== "slide" && effect !== "fade")
+		o.init = function(effect, direction, type, duration, easing) {
+			if (! effect in Class.EFFECTS)
 				throw new Error("Parameter 'effect' must be a valid animation effect");
 
-			if (direction !== "left" && direction !== "right")
-				throw new Error("Parameter 'direction' must be a valid transition direction");
+			if (! direction in Class.DIRECTIONS)
+				throw new Error("Parameter 'direction' must be a valid animation direction");
 
-			if (which !== "in" && which !== "out")
-				throw new Error("Parameter 'which' must be a valid valid transitive slide type");
+			if (! type in Class.TYPES)
+				throw new Error("Parameter 'type' must be a valid valid animation type");
 
 			if (typeof duration === "undefined")
 				throw new Error("Parameter 'duration' must be a valid number of seconds (float)");
 
 			this.effect = effect;
 			this.direction = direction;
-			this.which = which;
+			this.type = type;
 			this.duration = duration;
 			this.easing = easing || "ease";
 		};
@@ -98,7 +122,7 @@ wwl.slider.Animation = (
 					"wwl-slider-fx-" +
 					this.effect + "-" +
 					this.direction + "-" +
-					this.which + " " +
+					this.type + " " +
 					this.duration + "s " +
 					this.easing;
 
@@ -110,6 +134,13 @@ wwl.slider.Animation = (
 				dom.style.oAnimation      = animation;
 				dom.style.animation       = animation;
 			}.bind(this));
+		};
+
+		/*
+		 * @return string Animation type
+		 */
+		o.getType = function() {
+			return this.type;
 		};
 
 		/*

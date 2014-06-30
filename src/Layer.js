@@ -33,20 +33,65 @@ wwl.slider.Layer = (
 		}, o = Class.prototype;
 
 		/*
+		 * Hold the value for a state
+		 */
+		Class.STATES = {
+			INCOMING: "incoming",
+			OUTGOING: "outgoing",
+			PRESENT:  "present",
+			BEHIND:   "behind"
+		};
+
+		/*
 		 * @var HTMLElement
 		 */
 		o.dom = null;
 
 		/*
+		 * @var string
+		 */
+		o.state = null;
+
+		/*
+		 * @var hash<string>
+		 */
+		o.stateClasses = null;
+
+		/*
 		 * Create a Slide
 		 */
 		o.init = function(dom, options) {
-			options = options || {};
-
 			if (! dom instanceof HTMLElement)
 				throw new TypeError("Invalid DOM Node (must be an HTMLElement)");
 
+			options = options || {};
+			options.stateClasses = options.stateClasses || {};
+
 			this.dom = dom;
+
+			this.stateClasses = {};
+			this.stateClasses[Class.STATES.INCOMING] = options.stateClasses[Class.STATES.INCOMING] || "is-incoming";
+			this.stateClasses[Class.STATES.OUTGOING] = options.stateClasses[Class.STATES.OUTGOING] || "is-outgoing";
+			this.stateClasses[Class.STATES.PRESENT]  = options.stateClasses[Class.STATES.PRESENT]  || "is-present";
+			this.stateClasses[Class.STATES.BEHIND]   = options.stateClasses[Class.STATES.BEHIND]   || "is-behind";
+
+			this.setState("behind");
+		};
+
+		/*
+		 * Set the current state of the layer
+		 */
+		o.setState = function(state) {
+			if (! state in Class.STATES)
+				throw new TypeError("Parameter 'state' must be a valid state (see Layer.STATES)");
+
+			if (state === this.state)
+				return false;
+
+			this.dom.classList.remove(this.stateClasses[this.state]);
+			this.dom.classList.add(this.stateClasses[state]);
+			this.state = state;
+			return true;
 		};
 
 		/*

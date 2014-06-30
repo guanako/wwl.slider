@@ -36,7 +36,7 @@ var wwl        = wwl        || {};
  *   - SlideTransitionEnd:                { currentSlideId, previousSlideId, direction }
  */
 wwl.slider.Slider = (
-	function(Slide, Animation, undefined) {
+	function(Slide, Layer, Animation, undefined) {
 		"use strict";
 
 		if (typeof Promise !== "function")
@@ -44,6 +44,12 @@ wwl.slider.Slider = (
 
 		if (typeof Slide === "undefined")
 			throw new Error("Unmet dependency: Slide");
+
+		if (typeof Layer === "undefined")
+			throw new Error("Unmet dependency: Layer");
+
+		if (typeof Animation === "undefined")
+			throw new Error("Unmet dependency: Animation");
 
 		/*
 		 * Alias to the class itself and its prototype
@@ -141,6 +147,11 @@ wwl.slider.Slider = (
 		o.defaultAnimationDuration = null;
 
 		/*
+		 * @var hash<string>
+		 */
+		o.layerStateClasses = null;
+
+		/*
 		 * Create a Slider
 		 *
 		 * @param HTMLElement dom     The Slider root DOM Element
@@ -148,10 +159,11 @@ wwl.slider.Slider = (
 		 * @throws TypeError If the container is not an HTMLElement
 		 */
 		o.init = function(dom, options) {
-			options = options || {};
-
 			if (! dom instanceof HTMLElement)
 				throw new TypeError("Invalid DOM Node (must be an HTMLElement)");
+
+			options = options || {};
+			options.attributes = options.attributes || {};
 
 			this.dom = dom;
 			this.slides = [];
@@ -160,8 +172,8 @@ wwl.slider.Slider = (
 			this.playTimeout = null;
 			this.slideSelector = options.slideSelector || ".wwl-slider-slide";
 			this.layerSelector = options.layerSelector || ".wwl-slider-layer";
+			this.layerStateClasses = options.layerStateClasses || {};
 
-			options.attributes = options.attributes || {};
 			this.attributes = {};
 			this.attributes.autoplay          = options.attributes.autoplay          || "data-autoplay";
 			this.attributes.delay             = options.attributes.delay             || "data-delay";
@@ -169,20 +181,21 @@ wwl.slider.Slider = (
 			this.attributes.animationEasing   = options.attributes.animationEasing   || "data-animation-easing";
 			this.attributes.animationDuration = options.attributes.animationDuration || "data-animation-duration";
 
-			if (typeof options.autoplay !== "undefined")
-				this.autoplay = options.autoplay;
-			else if (this.dom.getAttribute(this.attributes.autoplay) !== null)
-				this.autoplay = this.dom.getAttribute(this.attributes.autoplay) !== null;
-			else
-				this.autoplay = false;
-
 			this.defaultDelay             = this.dom.getAttribute(this.attributes.delay)             || options.defaultDelay             || 2.0;
-			this.defaultAnimationEffect   = this.dom.getAttribute(this.attributes.animationEffect)   || options.defaultAnimationEffect   || "slide";
+			this.defaultAnimationEffect   = this.dom.getAttribute(this.attributes.animationEffect)   || options.defaultAnimationEffect   || Animation.EFFECTS.SLIDE;
 			this.defaultAnimationEasing   = this.dom.getAttribute(this.attributes.animationEasing)   || options.defaultAnimationEasing   || "ease";
 			this.defaultAnimationDuration = this.dom.getAttribute(this.attributes.animationDuration) || options.defaultAnimationDuration || 0.5;
 
 			this.delay    = parseFloat(this.delay);
 			this.duration = parseFloat(this.duration);
+
+			if (typeof options.autoplay !== "undefined") {
+				this.autoplay = options.autoplay;
+			} else if (this.dom.getAttribute(this.attributes.autoplay) !== null) {
+				this.autoplay = this.dom.getAttribute(this.attributes.autoplay) !== null;
+			} else {
+				this.autoplay = false;
+			}
 
 			this.importSlides();
 			/* TODO: note that when new slides are added, we must watch their
@@ -195,6 +208,7 @@ wwl.slider.Slider = (
 				var currentSlide = this.getCurrentSlide();
 				currentSlide.moveZ(1);
 				currentSlide.show();
+				currentSlide.setLayerState(Layer.STATES.PRESENT);
 
 				if (this.autoplay)
 					this.play();
@@ -211,17 +225,24 @@ wwl.slider.Slider = (
 		 * @return Promise
 		 */
 		o.show = function(id, direction) {
-			if (typeof id === "undefined" || isNaN(id))
+			/* Typecast string to int, useful when dealing with HTMLElement
+			 * attributes */
+			id = parseInt(id);
+
+			if (isNaN(id))
 				throw new TypeError("Parameter 'id' must be an integer");
 
 			if (id < 0 || id >= this.slides.length)
 				throw new RangeError("Parameter 'id' must be a valid slide id");
 
-			if (id === this.currentSlideId)
+			if (id === this.currentSlideId) {
 				return Promise.resolve();
+			}
 
 			if (typeof direction === "undefined")
-				var direction = id < this.currentSlideId ? "left" : "right";
+				var direction = id < this.currentSlideId
+					? Animation.DIRECTIONS.LEFT
+					: Animation.DIRECTIONS.RIGHT;
 
 			var prevId = this.currentSlideId;
 
@@ -244,10 +265,10 @@ wwl.slider.Slider = (
 
 			nextSlide.moveZ(2);
 			nextSlide.show();
-			nextSlide.animate(new Animation(animEffect, direction, "in", animDuration, animEasing));
+			nextSlide.animate(new Animation(animEffect, direction, Animation.TYPES.INCOMING, animDuration, animEasing));
 
 			return currentSlide
-				.animate(new Animation(animEffect, direction, "out", animDuration, animEasing))
+				.animate(new Animation(animEffect, direction, Animation.TYPES.OUTGOING, animDuration, animEasing))
 				.then(function() {
 
 					currentSlide.hide();
@@ -270,7 +291,7 @@ wwl.slider.Slider = (
 		 * @return Promise
 		 */
 		o.go = function(n) {
-			if (typeof n === "undefined" || isNaN(n))
+			if (isNaN(n) && parseInt(n) !== n)
 				throw new TypeError("Parameter 'n' must be an integer");
 
 			var id = (this.currentSlideId + n) % this.slides.length;
@@ -278,7 +299,11 @@ wwl.slider.Slider = (
 			if (id < 0)
 				id += this.slides.length;
 
-			return this.show(id, n < 0 ? "left" : "right");
+			return this.show(id,
+				n < 0
+					? Animation.DIRECTIONS.LEFT
+					: Animation.DIRECTIONS.RIGHT
+			);
 		};
 
 		/*
@@ -288,6 +313,9 @@ wwl.slider.Slider = (
 		 * @return Promise
 		 */
 		o.next = function(n) {
+			if (typeof n !== "undefined" && (isNaN(n) || parseInt(n) !== n))
+				throw new TypeError("Parameter 'n' must be an integer (or undefined)");
+
 			if (typeof n === "undefined")
 				n = 1;
 
@@ -301,6 +329,9 @@ wwl.slider.Slider = (
 		 * @return Promise
 		 */
 		o.previous = function(n) {
+			if (typeof n !== "undefined" && (isNaN(n) || parseInt(n) !== n))
+				throw new TypeError("Parameter 'n' must be an integer (or undefined)");
+
 			if (typeof n === "undefined")
 				n = 1;
 
@@ -356,7 +387,7 @@ wwl.slider.Slider = (
 		 * @throws RangeError If id is not a valid slide id
 		 */
 		o.getSlide = function(id) {
-			if (typeof id === "undefined" || isNaN(id))
+			if (isNaN(id) || parseInt(id) !== id)
 				throw new TypeError("Parameter 'id' must be an integer");
 
 			if (id < 0 || id >= this.slides.length)
@@ -372,6 +403,30 @@ wwl.slider.Slider = (
 		 */
 		o.isPlaying = function() {
 			return this.playing;
+		};
+
+		/*
+		 * Count slides
+		 *
+		 * @return int
+		 */
+		o.countSlides = function() {
+			return this.slides.length;
+		};
+
+		/*
+		 * Count slides
+		 *
+		 * @return int
+		 */
+		o.getSlideIds = function() {
+			var ids = [];
+
+			for (var i = 0; i < this.slides.length; i++) {
+				ids.push(i);
+			}
+
+			return ids;
 		};
 
 		/*
@@ -420,17 +475,27 @@ wwl.slider.Slider = (
 		};
 
 		/*
+		 * Import existing slides
+		 */
+		o.importSlides = function() {
+			var slides = this.dom.querySelectorAll(this.slideSelector);
+			Array.prototype.slice.call(slides).forEach(this.addSlide, this);
+		};
+
+		/*
 		 * Add a slide
 		 *
 		 * @param HTMLElement dom
 		 */
 		o.addSlide = function(dom) {
-			if (! this.hasSlideElement(dom)) {
+			if (! this.hasSlideByElement(dom)) {
 				var slide = new Slide(dom, {
 					defaultDelay:             this.defaultDelay,
 					defaultAnimationEffect:   this.defaultAnimationEffect,
 					defaultAnimationEasing:   this.defaultAnimationEasing,
 					defaultAnimationDuration: this.defaultAnimationDuration,
+					layerSelector:            this.layerSelector,
+					layerStateClasses:        this.layerStateClasses,
 					attributes: {
 						delay:             this.attributes.delay,
 						animationEffect:   this.attributes.animationEffect,
@@ -449,7 +514,7 @@ wwl.slider.Slider = (
 		 *
 		 * @param HTMLElement dom
 		 */
-		o.hasSlideElement = function(dom) {
+		o.hasSlideByElement = function(dom) {
 			for (/*let*/ var i = 0; i < this.slides.length; i++) {
 				if (this.slides[i].dom === dom) {
 					return true;
@@ -460,20 +525,13 @@ wwl.slider.Slider = (
 		};
 
 		/*
-		 * Import existing slides
-		 */
-		o.importSlides = function() {
-			var slides = this.dom.querySelectorAll(this.slideSelector);
-			Array.prototype.slice.call(slides).forEach(this.addSlide, this);
-		};
-
-		/*
 		 * :Commit :)
 		 */
 		return Class;
 	}
 )(
 	wwl.slider.Slide,
+	wwl.slider.Layer,
 	wwl.slider.Animation
 );
 

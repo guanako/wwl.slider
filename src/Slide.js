@@ -31,6 +31,9 @@ wwl.slider.Slide = (
 		if (typeof Layer === "undefined")
 			throw new Error("Unmet dependency: Layer");
 
+		if (typeof Animation === "undefined")
+			throw new Error("Unmet dependency: Animation");
+
 		/*
 		 * Alias to the class itself and its prototype
 		 */
@@ -44,9 +47,19 @@ wwl.slider.Slide = (
 		o.dom = null;
 
 		/*
+		 * @var array<Layer>
+		 */
+		o.layers = null;
+
+		/*
 		 * @var string
 		 */
 		o.cssDisplay = null;
+
+		/*
+		 * @var string
+		 */
+		o.layerSelector = null;
 
 		/*
 		 * @var hash<string property, string attribute>
@@ -74,19 +87,26 @@ wwl.slider.Slide = (
 		o.animationDuration = null;
 
 		/*
+		 * @var hash<string>
+		 */
+		o.layerStateClasses = null;
+
+		/*
 		 * Create a Slide
 		 */
 		o.init = function(dom, options) {
-			options = options || {};
-
 			if (! dom instanceof HTMLElement)
 				throw new TypeError("Invalid DOM Node (must be an HTMLElement)");
 
-			this.dom = dom;
-			this.cssDisplay = dom.style.display !== "none"
-				? dom.style.display : "block";
-
+			options = options || {};
 			options.attributes = options.attributes || {};
+
+			this.dom = dom;
+			this.layers = [];
+			this.cssDisplay = dom.style.display !== "none" ? dom.style.display : "block";
+			this.layerSelector = options.layerSelector || ".layer";
+			this.layerStateClasses = options.layerStateClasses || {};
+
 			this.attributes = {};
 			this.attributes.delay             = options.attributes.delay             || "data-delay";
 			this.attributes.animationEffect   = options.attributes.animationEffect   || "data-animation";
@@ -94,12 +114,14 @@ wwl.slider.Slide = (
 			this.attributes.animationDuration = options.attributes.animationDuration || "data-animation-duration";
 
 			this.delay             = this.dom.getAttribute(this.attributes.delay)             || options.defaultDelay             || 2.0;
-			this.animationEffect   = this.dom.getAttribute(this.attributes.animationEffect)   || options.defaultAnimationEffect   || "slide";
+			this.animationEffect   = this.dom.getAttribute(this.attributes.animationEffect)   || options.defaultAnimationEffect   || Animation.EFFECTS.SLIDE;
 			this.animationEasing   = this.dom.getAttribute(this.attributes.animationEasing)   || options.defaultAnimationEasing   || "ease";
 			this.animationDuration = this.dom.getAttribute(this.attributes.animationDuration) || options.defaultAnimationDuration || 0.5;
 
 			this.delay    = parseFloat(this.delay);
 			this.duration = parseFloat(this.duration);
+
+			this.importLayers();
 		};
 
 		/*
@@ -108,7 +130,17 @@ wwl.slider.Slide = (
 		 * @param Animation animation
 		 */
 		o.animate = function(animation) {
-			return animation.animate(this.dom);
+			if (! animation instanceof Animation)
+				throw new TypeError("Parameter 'animation' must be a valid Animation");
+
+			var isIncoming = animation.getType() === Animation.TYPES.INCOMING;
+			var animationEndPromise = animation.animate(this.dom);
+
+			this.setLayerState(isIncoming ? Layer.STATES.INCOMING : Layer.STATES.OUTGOING);
+
+			return animationEndPromise.then(function() {
+				this.setLayerState(isIncoming ? Layer.STATES.PRESENT : Layer.STATES.BEHIND);
+			}.bind(this));
 		};
 
 		/*
@@ -168,6 +200,57 @@ wwl.slider.Slide = (
 		 */
 		o.getAnimationDuration = function() {
 			return this.animationDuration;
+		};
+
+		/*
+		 * Set layer state
+		 */
+		o.setLayerState = function(state) {
+			if (! state in Layer.STATES)
+				throw new TypeError("Parameter 'state' must be a valid state (see Layer.STATES)");
+
+			this.layers.forEach(function(layer) {
+				layer.setState(state);
+			});
+		};
+
+		/*
+		 * Import existing layers
+		 */
+		o.importLayers = function() {
+			var layers = this.dom.querySelectorAll(this.layerSelector);
+			Array.prototype.slice.call(layers).forEach(this.addLayer, this);
+		};
+
+		/*
+		 * Add a layer
+		 *
+		 * @param HTMLElement dom
+		 */
+		o.addLayer = function(dom) {
+			if (! this.hasLayerByElement(dom)) {
+				var layer = new Layer(dom, {
+					stateClasses: this.layerStateClasses
+				});
+
+				this.layers.push(layer);
+				layer.setState(Layer.STATES.BEHIND);
+			}
+		};
+
+		/*
+		 * Tell if the given element is registered as a slide
+		 *
+		 * @param HTMLElement dom
+		 */
+		o.hasLayerByElement = function(dom) {
+			for (/*let*/ var i = 0; i < this.layers.length; i++) {
+				if (this.layers[i].dom === dom) {
+					return true;
+				}
+			}
+
+			return false;
 		};
 
 		/*

@@ -34,9 +34,9 @@ Dépendances
 
 WWL Slider nécessite un interprêteur JavaScript compabible au minimum
 ECMAScript 5, et nécessite les Promises d'ECMAScript 6. Cependant, un
-polyfill peut être utilisé, tel que celui-ci:
+polyfill peut être utilisé, tel que celui-ci :
 
-[https://github.com/jakearchibald/es6-promise](ES6 Promise on Github)
+[Voir le projet « ES6-Promise »](https://github.com/jakearchibald/es6-promise)
 
 Première utilisation
 --------------------

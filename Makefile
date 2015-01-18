@@ -104,17 +104,31 @@ define task
 			)
 endef
 
+#
+# Generate the version file
+#
+ver_file = Version
+ver = $(shell                                                  \
+	test -d .git || (echo "null"; exit 1) || exit 2>/dev/null;   \
+	git describe --always | perl -pe "s/^v//" | (                \
+		[[ "$(env)" == "debug" ]]                                  \
+			&& perl -pe "s/^(\d+\.\d+\.\d+)$$|(-\d+-)/\$$1-dev\$$2/" \
+			|| cat                                                   \
+	)                                                            \
+)
+
 #-----------------------------------------------------------------------
 # Commands
 #-----------------------------------------------------------------------
 
-default: widget styles
+default: widget styles $(ver_file)
 
 clean:
 	if [[ -n "$(ls dist/*)" || -n "$(widget_obj_all)" ]]; then \
-		$(call task, "Cleaning compiled objects",           \
+		$(call task, "Cleaning compiled objects",                \
 			rm -rf dist/*;                                         \
-			rm -f $(widget_obj_all),                               \
+			rm -f $(widget_obj_all);                               \
+			rm -f $(ver_file),                                     \
 		true);                                                   \
 	fi
 
@@ -159,3 +173,14 @@ $(styles_out): $(styles_src)
 		$(lessc_bin) $(lessc_flags) $(styles_src_main) > $@;     \
 		autoprefixer -b "last 2 versions" $@                     \
 	), rm $@)
+
+#-----------------------------------------------------------------------
+# Rules for the version file
+#-----------------------------------------------------------------------
+
+$(ver_file):
+ifneq ($(shell cat $(ver_file) 2>/dev/null || true), $(ver))
+	$(call task, "$(ver_file): $(ver)", echo "$(ver)" > $@, true)
+endif
+
+.PHONY: $(ver_file)

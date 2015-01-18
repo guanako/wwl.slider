@@ -63,7 +63,7 @@ ifeq ($(OSTYPE), win32)
 endif
 
 ifeq ($(env), release)
-	lessc_flags  = -x -O2
+	lessc_flags  = -x
 	uglify_flags = --compress --mangle
 else
 	lessc_flags  =
